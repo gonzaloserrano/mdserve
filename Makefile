@@ -17,3 +17,11 @@ release:
 	git tag $(VERSION)
 	git push origin $(VERSION)
 	@echo "Tagged and pushed $(VERSION)"
+	@echo "Waiting for CI release..."
+	@sleep 5 && gh run watch --exit-status
+	gh release download $(VERSION) --pattern '*darwin*.zip' --dir dist
+	@for zip in dist/*darwin*.zip; do \
+		echo "Notarizing $$zip..."; \
+		xcrun notarytool submit "$$zip" --keychain-profile "mdserve" --wait; \
+	done
+	@rm -rf dist

@@ -1,11 +1,14 @@
+version: 2
+
 builds:
   - goos: [darwin, windows]
     goarch: [amd64, arm64]
+    hooks:
+      post:
+        - cmd: sh -c '[ "{{ .Os }}" = "darwin" ] && codesign --force --options runtime --sign "Developer ID Application: GONZALO SERRANO REVUELTA (ZW89UFV4L2)" "{{ .Path }}" || true'
 
 archives:
-  - format_overrides:
-      - goos: windows
-        format: zip
+  - format: zip
 
 release:
   github:
