@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"cmp"
+	"embed"
 	"flag"
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -19,11 +21,16 @@ import (
 	"go.abhg.dev/goldmark/mermaid"
 )
 
+//go:embed assets/*
+var assets embed.FS
+
+var assetsFS, _ = fs.Sub(assets, "assets")
+
 var md = goldmark.New(goldmark.WithExtensions(
 	extension.Table,
 	extension.Strikethrough,
 	extension.Linkify,
-	&mermaid.Extender{},
+	&mermaid.Extender{MermaidURL: "/_/mermaid.min.js"},
 ))
 
 type pageData struct {
@@ -75,6 +82,7 @@ func main() {
 	root, _ = filepath.Abs(root)
 
 	mux := http.NewServeMux()
+	mux.Handle("GET /_/", http.StripPrefix("/_/", http.FileServerFS(assetsFS)))
 	if !info.IsDir() {
 		mux.HandleFunc("GET /{$}", singleFileHandler(root))
 	} else {
@@ -83,7 +91,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: open root: %v\n", err)
 			os.Exit(1)
 		}
-		defer rootDir.Close()
+		defer rootDir.Close() //nolint:errcheck
 		mux.HandleFunc("GET /{path...}", dirHandler(rootDir, filepath.Base(root)))
 	}
 
@@ -146,7 +154,7 @@ func renderMarkdownFromRoot(w http.ResponseWriter, rootDir *os.Root, relPath str
 		http.Error(w, "read file failed", http.StatusInternalServerError)
 		return
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	src, err := io.ReadAll(f)
 	if err != nil {
@@ -165,7 +173,7 @@ func renderMarkdown(w http.ResponseWriter, title string, src []byte) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	page.Execute(w, pageData{
+	_ = page.Execute(w, pageData{
 		Title: title,
 		Body:  template.HTML(buf.String()),
 	})
@@ -177,7 +185,7 @@ func renderDirListing(w http.ResponseWriter, rootDir *os.Root, rootName, urlPath
 		http.Error(w, "read directory failed", http.StatusInternalServerError)
 		return
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	entries, err := f.ReadDir(-1)
 	if err != nil {
@@ -228,7 +236,7 @@ func renderDirListing(w http.ResponseWriter, rootDir *os.Root, rootName, urlPath
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	page.Execute(w, pageData{
+	_ = page.Execute(w, pageData{
 		Title: title,
 		Body:  template.HTML(buf.String()),
 	})
