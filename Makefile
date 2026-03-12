@@ -1,12 +1,15 @@
 BINARY := mdserve
 
-.PHONY: run clean release
+.PHONY: run install clean release
 
 run: $(BINARY)
 	./$(BINARY) .
 
 $(BINARY): main.go
 	go build -o $(BINARY) .
+
+install:
+	go install .
 
 clean:
 	rm -f $(BINARY)
