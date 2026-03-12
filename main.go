@@ -16,12 +16,14 @@ import (
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	"go.abhg.dev/goldmark/mermaid"
 )
 
 var md = goldmark.New(goldmark.WithExtensions(
 	extension.Table,
 	extension.Strikethrough,
 	extension.Linkify,
+	&mermaid.Extender{},
 ))
 
 type pageData struct {
