@@ -26,6 +26,7 @@ mdserve docs/         # serve a directory tree
 ## Features
 
 - Tables, strikethrough, and autolinks via [goldmark](https://github.com/yuin/goldmark)
+- [Mermaid](https://mermaid.js.org/) diagram rendering (JS embedded in binary, works offline)
 - Breadcrumb navigation in subdirectories
 - Minimal inline CSS, no external dependencies
 - Directory traversal prevention via `os.OpenRoot`

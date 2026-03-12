@@ -308,3 +308,23 @@ Unlike a pre-formatted code block, a code span indicates code within a
 normal paragraph. For example:
 
 Use the `printf()` function.
+
+## Diagrams
+
+### Mermaid
+
+```mermaid
+graph TD;
+    A[Start] --> B{Decision};
+    B -->|Yes| C[OK];
+    B -->|No| D[Cancel];
+    C --> E[End];
+    D --> E;
+```
+
+```mermaid
+sequenceDiagram
+    Client->>Server: GET /readme.md
+    Server->>Server: Parse Markdown
+    Server-->>Client: HTML Response
+```
