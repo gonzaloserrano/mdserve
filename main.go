@@ -85,6 +85,8 @@ func main() {
 	mux.Handle("GET /_/", http.StripPrefix("/_/", http.FileServerFS(assetsFS)))
 	if !info.IsDir() {
 		mux.HandleFunc("GET /{$}", singleFileHandler(root))
+		parentDir := filepath.Dir(root)
+		mux.Handle("GET /{path...}", http.FileServer(http.Dir(parentDir)))
 	} else {
 		rootDir, err := os.OpenRoot(root)
 		if err != nil {
@@ -144,7 +146,7 @@ func dirHandler(rootDir *os.Root, rootName string) http.HandlerFunc {
 			return
 		}
 
-		http.NotFound(w, r)
+		serveFileFromRoot(w, r, rootDir, relPath, info)
 	}
 }
 
@@ -163,6 +165,17 @@ func renderMarkdownFromRoot(w http.ResponseWriter, rootDir *os.Root, relPath str
 	}
 
 	renderMarkdown(w, path.Base(relPath), src)
+}
+
+func serveFileFromRoot(w http.ResponseWriter, r *http.Request, rootDir *os.Root, relPath string, info fs.FileInfo) {
+	f, err := rootDir.Open(relPath)
+	if err != nil {
+		http.Error(w, "read file failed", http.StatusInternalServerError)
+		return
+	}
+	defer f.Close() //nolint:errcheck
+
+	http.ServeContent(w, r, relPath, info.ModTime(), f)
 }
 
 func renderMarkdown(w http.ResponseWriter, title string, src []byte) {
